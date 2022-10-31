@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.lang.Integer;
 
 import net.floodlightcontroller.packet.IPv4;
 
@@ -37,27 +36,28 @@ public class RouteTable
 	public RouteEntry lookup(int ip)
 	{
 		synchronized(this.entries)
-        	{
+        {
 			/*****************************************************************/
 			/* TODO: Find the route entry with the longest prefix match      */
-			/* @author KJ Choi                                               */
-
-			int smallest = -1;
-			int comparison = 0;
-			RouteEntry matched_entry = null;
-			for (RouteEntry entry : this.entries) 
-			{
-				if (Integer.compareUnsigned(comparison = entry.getDestinationAddress()^ip, smallest)<0) 
-				{
-					matched_entry = entry;
-					smallest = comparison;
-				}
-			}
-
-			return matched_entry;
+			
+	        RouteEntry bestMatch = null;
+	        for (RouteEntry entry : this.entries)
+	        {
+	           int maskedDst = ip & entry.getMaskAddress();
+	           int entrySubnet = entry.getDestinationAddress() 
+	               & entry.getMaskAddress();
+	           if (maskedDst == entrySubnet)
+	           {
+	        	   if ((null == bestMatch) 
+	        		   || (entry.getMaskAddress() > bestMatch.getMaskAddress()))
+	        	   { bestMatch = entry; }
+	           }
+	        }
+			
+			return bestMatch;
 			
 			/*****************************************************************/
-        	}
+        }
 	}
 	
 	/**
