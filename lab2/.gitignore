@@ -1,9 +1,0 @@
-bin
-*.jar
-*.egg-info
-*.pyo
-*.pyc
-ip_config
-arp_cache
-rtable.*
-pox
