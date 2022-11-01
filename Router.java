@@ -91,6 +91,10 @@ public class Router extends Device
 		case Ethernet.TYPE_IPv4:
 			this.handleIpPacket(etherPacket, inIface);
 			break;
+
+		case Ethernet.TYPE_ARP:
+			this.handleIpPacket(etherPacket, inIface);
+			break;
 		// Ignore all other packet types, for now
 		}
 		
