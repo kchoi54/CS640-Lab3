@@ -93,10 +93,18 @@ public class Router extends Device
 		case Ethernet.TYPE_IPv4:
 			this.handleIpPacket(etherPacket, inIface);
 			break;
+
+		case Ethernet.TYPE_ARP:
+			this.handleARPPacket(etherPacket, inIface);
+			break;
 		// Ignore all other packet types, for now
 		}
 		
 		/********************************************************************/
+	}
+
+	private void handleARPPacket(Ethernet etherPacket, Iface inIface){
+		
 	}
 	
 	private void handleIpPacket(Ethernet etherPacket, Iface inIface)
@@ -153,7 +161,9 @@ public class Router extends Device
 			                        this.generateIcmpPacket((byte)0, (byte)0, etherPacket);
 
 					}
-				}			
+				}
+				
+				
 				return; 
 			}
 		}
