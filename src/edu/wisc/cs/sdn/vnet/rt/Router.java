@@ -160,9 +160,12 @@ public class Router extends Device
 			{
 				for (RipTableEntry entry: ripTable.values())
 				{
-					if (entry.last_updated != -1 && System.currentTimeMillis() - entry.last_updated >= 30000)
+					System.out.println(IPv4.fromIPv4Address(entry.ip) + "   :   metric:" +entry.metric+"   time:"+ entry.last_updated);
+					if (entry.last_updated != -1 && System.currentTimeMillis() - entry.last_updated >= 15000)
 					{
-						ripTable.remove(entry.ip);
+						System.out.println("deleting "+IPv4.fromIPv4Address(entry.ip)+"   "+entry.mask);
+						synchronized(ripTable)
+						{ ripTable.remove(entry.ip); }
 						routeTable.remove(entry.ip, entry.mask);
 					}
 				}
@@ -227,10 +230,11 @@ public class Router extends Device
 
 		//rip entries
 		List<RIPv2Entry> entries = new LinkedList<RIPv2Entry>();
-		synchronized(this.ripTable)
+		synchronized(this.ripTable) 
 		{
 			for(RipTableEntry ripEntry: this.ripTable.values())
 			{
+				System.out.println("RIPTABLE: " + IPv4.fromIPv4Address(ripEntry.ip) + "  " + ripEntry.last_updated);
 				RIPv2Entry entry = new RIPv2Entry(ripEntry.ip, ripEntry.mask, ripEntry.metric); 
 				entries.add(entry);
 			}
@@ -280,10 +284,10 @@ public class Router extends Device
 				if (this.ripTable.containsKey(ip))
 				{	
 					RipTableEntry localEntry = this.ripTable.get(ip);
-					localEntry.last_updated = System.currentTimeMillis();
 					if (metric < localEntry.metric)
 					{
-						localEntry.metric = metric;
+						localEntry.last_updated = System.currentTimeMillis();
+						localEntry.metric = metric+1;
 						this.routeTable.update(ip, mask, nextHop, inIface);
 					}
 
@@ -302,7 +306,7 @@ public class Router extends Device
 				}
 				else
 				{
-					this.ripTable.put(ip, new RipTableEntry(ip, mask, metric, System.currentTimeMillis()));
+					this.ripTable.put(ip, new RipTableEntry(ip, mask, metric+1, System.currentTimeMillis()));
 					if (metric < 16)
 					{
 						this.routeTable.insert(ip, nextHop, mask, inIface);
@@ -325,6 +329,7 @@ public class Router extends Device
 		/********************************************************************/
 		/* TODO: Handle packets                                             */
 		
+
 		switch(etherPacket.getEtherType())
 		{
 		case Ethernet.TYPE_IPv4:
@@ -484,6 +489,7 @@ public class Router extends Device
                 		if (UDP.RIP_PORT == udpPacket.getDestinationPort())
                 		{	
 					this.handleRipPacket(etherPacket, inIface); 
+					return ;
 				}
 		       }
 		}
