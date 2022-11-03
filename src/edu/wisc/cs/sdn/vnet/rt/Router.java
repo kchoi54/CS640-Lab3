@@ -252,15 +252,7 @@ public class Router extends Device
 	{
 		System.out.println("Handle RIP packet");
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
-		
-		//ip destination 224.0.0.9
-		if (IPv4.toIPv4Address("224.0.0.9") != ipPacket.getDestinationAddress())
-		{ return; }
-
-		UDP udpPacket = (UDP)ipPacket.getPayload();
-		//udp dest port 520
-		if (UDP.RIP_PORT != udpPacket.getDestinationPort())
-		{ return; }
+                UDP udpPacket = (UDP)ipPacket.getPayload();
 
 		RIPv2 rip = (RIPv2)udpPacket.getPayload();
 		//handle request
@@ -481,8 +473,20 @@ public class Router extends Device
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
 		
 		//call handleRipPacket() if udp
-		if (IPv4.PROTOCOL_UDP == ipPacket.getProtocol())
-		{ this.handleRipPacket(etherPacket, inIface); }
+		
+		//ip destination 224.0.0.9
+                if (IPv4.toIPv4Address("224.0.0.9") == ipPacket.getDestinationAddress())
+                {
+		       if (IPv4.PROTOCOL_UDP == ipPacket.getProtocol())
+		       {
+		       		UDP udpPacket = (UDP)ipPacket.getPayload();
+                		//udp dest port 520
+                		if (UDP.RIP_PORT == udpPacket.getDestinationPort())
+                		{	
+					this.handleRipPacket(etherPacket, inIface); 
+				}
+		       }
+		}
 
 		System.out.println("Handle IP packet");
 		
