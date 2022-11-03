@@ -5,6 +5,9 @@ import edu.wisc.cs.sdn.vnet.sw.Switch;
 import edu.wisc.cs.sdn.vnet.vns.Command;
 import edu.wisc.cs.sdn.vnet.vns.VNSComm;
 
+/**
+ * @author KJ Choi 
+ */
 public class Main 
 {
 	private static final short DEFAULT_PORT = 8888;
@@ -67,7 +70,7 @@ public class Main
 		else if (host.startsWith("r"))
 		{
 			// Create router instance
-			dev = new Router(host, dump);
+			dev = new Router(host, dump); //run RIP if routeTable is not provided
 		}
 		else 
 		{
@@ -88,7 +91,8 @@ public class Main
 			// Read static route table
 			if (routeTableFile != null)
 			{ ((Router)dev).loadRouteTable(routeTableFile); }
-			
+			else
+			{ ((Router)dev).initRip(); }
 			// Read static ACP cache
 			if (arpCacheFile != null)
 			{ ((Router)dev).loadArpCache(arpCacheFile); }
