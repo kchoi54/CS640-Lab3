@@ -391,6 +391,7 @@ public class Router extends Device
 		//Check for Request
 		if(arpPacket.getOpCode() == ARP.OP_REQUEST){
 
+			System.out.println("Received an ARP Request ");
 			//confirm Target IP is req interface IP
 			if(targetIp != inIface.getIpAddress()){
 				return ;
@@ -406,10 +407,11 @@ public class Router extends Device
 
 
 		}
-		else{
+		else if(arpPacket.getOpCode()== ARP.OP_REPLY){
 
 			//handle replies 
 
+			System.out.println("Received an ARP Reply ");
 
 			byte[] ip = arpPacket.getSenderProtocolAddress();
             byte[] mac = arpPacket.getSenderHardwareAddress();
