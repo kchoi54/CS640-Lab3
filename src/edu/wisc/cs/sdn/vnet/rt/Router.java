@@ -427,46 +427,6 @@ public class Router extends Device
 }
 	}
 
-
-		//ARP Reply
-
-		// Ethernet ether = new Ethernet();
-		// ARP arpReplyPacket = new ARP();
-
-		// //Setting appropriate fields 
-		// ether.setEtherType(Ethernet.TYPE_ARP);
-		// ether.setSourceMACAddress(inIface.getMacAddress().toBytes());
-		// ether.setDestinationMACAddress(etherPacket.getSourceMACAddress());
-
-
-		// //Setting ARP Header
-		// arpReplyPacket.setHardwareType(ARP.HW_TYPE_ETHERNET);
-		// arpReplyPacket.setProtocolType(ARP.PROTO_TYPE_IP);
-
-
-		// arpReplyPacket.setHardwareAddressLength((byte)(Ethernet.DATALAYER_ADDRESS_LENGTH & 0xff));
-		// arpReplyPacket.setProtocolAddressLength((byte)4);
-			
-		// arpReplyPacket.setOpCode(ARP.OP_REPLY);
-		// arpReplyPacket.setSenderHardwareAddress(inIface.getMacAddress().toBytes());
-		// arpReplyPacket.setSenderHardwareAddress(IPv4.toIPv4AddressBytes(inIface.getIpAddress()));
-		// arpReplyPacket.setTargetHardwareAddress(arpPacket.getSenderHardwareAddress());
-		// arpReplyPacket.setTargetProtocolAddress(arpPacket.getSenderProtocolAddress());
-
-
-		// //setting as Ethernet payload
-		// ether.setPayload(arpReplyPacket);
-
-		//send reply
-		// sendPacket(ether, inIface);
-
-
-		//TO DO // 
-		//CHECK TTL & CHECKSUM
-
-		
-
-	// }
 	
 	private void handleIpPacket(Ethernet etherPacket, Iface inIface)
 	{
