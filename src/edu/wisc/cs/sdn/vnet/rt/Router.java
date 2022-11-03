@@ -1,6 +1,8 @@
 package edu.wisc.cs.sdn.vnet.rt;
 
 import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import edu.wisc.cs.sdn.vnet.Device;
 import edu.wisc.cs.sdn.vnet.DumpFile;
@@ -22,6 +24,16 @@ public class Router extends Device
 	
 	/** ARP cache for the router */
 	private ArpCache arpCache;
+
+	/**
+	 * 
+	 Create a Queue for ARP 
+	 */
+
+	private Map<Integer, Queue> ipQueue = new HashMap<>();
+
+	private Queue packetQ;
+
 	
 	/**
 	 * Creates a router for a specific host.
@@ -108,7 +120,10 @@ public class Router extends Device
 
 	private void handleARPPacket(Ethernet etherPacket, Iface inIface){
 
-		
+		if (etherPacket.getEtherType() != Ethernet.TYPE_ARP)
+        { return; }
+        System.out.println("Handling ARP packet");
+
 
 		//Get Target protocol address 
 		ARP arpPacket = (ARP)etherPacket.getPayload();
@@ -270,14 +285,108 @@ public class Router extends Device
 		ArpEntry arpEntry = this.arpCache.lookup(nextHop);
 		if (null == arpEntry)
 		{
-			System.out.println("Destination host unreachable");
+
+			/* System.out.println("Destination host unreachable");
                         this.generateIcmpPacket((byte)3, (byte)1, etherPacket);
-                        return;
+                        return; */
+
+			if(!ipQueue.containsKey(nextHop)){
+				ipQueue.put(nextHop, new LinkedList<>());
+				System.out.println("Wait for ARP reply for new ip" + IPv4.fromIPv4Address(nextHop));
+			}
+
+			generateARPRequest(etherPacket, nextHop, inIface, outIface);
+			return;
 
 	       	}
 		etherPacket.setDestinationMACAddress(arpEntry.getMac().toBytes());
         
 		this.sendPacket(etherPacket, outIface);
+	}
+
+	private static final byte[] ZERO = {0, 0, 0, 0, 0, 0};
+    private static final byte[] BROADCAST = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff};
+
+	/**
+	 * @param etherPacket
+	 * @param nextHop
+	 * @param inIface
+	 * @param outIface
+	 */
+	private void generateARPRequest(Ethernet etherPacket, final int nextHop, Iface inIface, final Iface outIface) {
+
+		//Get details from the queue 
+
+		Queue packetQ = ipQueue.get(nextHop);
+		packetQ.add(etherPacket);
+
+
+		//generate arp packet here 
+		final Ethernet ether = generateARPPacket(BROADCAST, ARP.OP_REQUEST, ZERO, IPv4.toIPv4AddressBytes(nextHop), inIface);
+
+		//Create atomically updatable elements 
+		final AtomicReference<Ethernet> atomicEther = new AtomicReference<>(ether);
+        final AtomicReference<Iface> atomicIface = new AtomicReference<>(outIface);
+        // final AtomicReference<Ethernet> atomicOriginalPacket = new AtomicReference<>(etherPacket);
+        final AtomicReference<Queue> atomicQueue = new AtomicReference<>(packetQ);
+
+
+		Thread arpReplyWait = new Thread(new Runnable(){
+			@Override
+            public void run() {
+                try {
+                    int times = 3;
+                    for (int i = 0; i < times; i++) {
+                        System.out.println("----- Time " + i + atomicEther.get() + "-----");
+                        sendPacket(atomicEther.get(), atomicIface.get());
+                        Thread.sleep(1000);
+                        if (arpCache.lookup(nextHop) != null) {
+                            System.out.println("Have find the arp match in this turn !!");
+                            return;
+                        }
+                    }
+                    while (atomicQueue.get() != null && atomicQueue.get().peek() != null) {
+                        atomicQueue.get().poll();
+                    }
+                    System.out.println("Destination host unreachable");
+                    generateIcmpPacket((byte)3, (byte)1, etherPacket);
+                        return;
+                } catch (InterruptedException e) {
+                    System.out.println(e);
+                }
+            }
+        });
+
+		arpReplyWait.start();
+		return;
+
+	}
+
+	private Ethernet generateARPPacket(byte[] destMAC, short opRequest, byte[] targethwAddr, byte[] targetprotocol,
+			Iface inIface) {
+		
+		Ethernet ethernetHeader = new Ethernet();
+        ethernetHeader.setEtherType(Ethernet.TYPE_ARP);
+        ethernetHeader.setSourceMACAddress(inIface.getMacAddress().toBytes());
+        ethernetHeader.setDestinationMACAddress(destMAC);
+        // ARP header
+        ARP arpHeader = new ARP();
+        arpHeader.setHardwareType(ARP.HW_TYPE_ETHERNET);
+        arpHeader.setProtocolType(ARP.PROTO_TYPE_IP);
+        arpHeader.setHardwareAddressLength((byte) Ethernet.DATALAYER_ADDRESS_LENGTH);
+        arpHeader.setProtocolAddressLength((byte) 4);
+        arpHeader.setOpCode(opRequest);
+        arpHeader.setSenderHardwareAddress(inIface.getMacAddress().toBytes());
+        arpHeader.setSenderProtocolAddress(IPv4.toIPv4AddressBytes(inIface.getIpAddress()));
+        arpHeader.setTargetHardwareAddress(targethwAddr);
+        arpHeader.setTargetProtocolAddress(targetprotocol);
+        // link
+        ethernetHeader.setPayload(arpHeader);
+        return ethernetHeader;
+
+
+		
+		
 	}
 
 	private void generateIcmpPacket(byte icmpType, byte icmpCode, Ethernet origEther)
