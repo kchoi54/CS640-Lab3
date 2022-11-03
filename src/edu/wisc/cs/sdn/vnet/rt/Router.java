@@ -426,6 +426,8 @@ public class Router extends Device
 		}
 	}
 }
+	}
+
 
 		//ARP Reply
 
@@ -465,7 +467,7 @@ public class Router extends Device
 
 		
 
-	}
+	// }
 	
 	private void handleIpPacket(Ethernet etherPacket, Iface inIface)
 	{
