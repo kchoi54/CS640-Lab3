@@ -146,7 +146,7 @@ public class Router extends Device
 		{
 			public void run()
 			{
-				System.out.println("Send unsolicited RIP response");
+				//System.out.println("Send unsolicited RIP response");
 				for (Iface iface : interfaces.values())
 				{ sendRIP(1, null, iface); }
 			}
@@ -160,10 +160,10 @@ public class Router extends Device
 			{
 				for (RipTableEntry entry: ripTable.values())
 				{
-					System.out.println(IPv4.fromIPv4Address(entry.ip) + "   :   metric:" +entry.metric+"   time:"+ entry.last_updated);
-					if (entry.last_updated != -1 && System.currentTimeMillis() - entry.last_updated >= 15000)
+					//System.out.println(IPv4.fromIPv4Address(entry.ip) + "   :   metric:" +entry.metric+"   time:"+ entry.last_updated);
+					if (entry.last_updated != -1 && System.currentTimeMillis() - entry.last_updated >= 30000)
 					{
-						System.out.println("deleting "+IPv4.fromIPv4Address(entry.ip)+"   "+entry.mask);
+						//System.out.println("deleting "+IPv4.fromIPv4Address(entry.ip)+"   "+entry.mask);
 						synchronized(ripTable)
 						{ ripTable.remove(entry.ip); }
 						routeTable.remove(entry.ip, entry.mask);
@@ -234,7 +234,7 @@ public class Router extends Device
 		{
 			for(RipTableEntry ripEntry: this.ripTable.values())
 			{
-				System.out.println("RIPTABLE: " + IPv4.fromIPv4Address(ripEntry.ip) + "  " + ripEntry.last_updated);
+				//System.out.println("RIPTABLE: " + IPv4.fromIPv4Address(ripEntry.ip) + "  " + ripEntry.last_updated);
 				RIPv2Entry entry = new RIPv2Entry(ripEntry.ip, ripEntry.mask, ripEntry.metric); 
 				entries.add(entry);
 			}
@@ -298,7 +298,7 @@ public class Router extends Device
 						{
 							if (inIface.equals(routeEntry.getInterface()))
 							{
-								localEntry.metric = 16;
+								this.ripTable.remove(ip);
 								this.routeTable.remove(ip, mask);
 							}
 						}
@@ -306,9 +306,9 @@ public class Router extends Device
 				}
 				else
 				{
-					this.ripTable.put(ip, new RipTableEntry(ip, mask, metric+1, System.currentTimeMillis()));
 					if (metric < 16)
 					{
+						this.ripTable.put(ip, new RipTableEntry(ip, mask, metric+1, System.currentTimeMillis()));
 						this.routeTable.insert(ip, nextHop, mask, inIface);
 					}
 				}
