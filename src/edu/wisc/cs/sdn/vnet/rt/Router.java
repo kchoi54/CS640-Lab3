@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Aaron Gember-Jacobson and Anubhavnidhi Abhashkumar
  * @author KJ Choi 
+ * @author Harshita Singh
  */
 public class Router extends Device
 {	
@@ -91,6 +92,11 @@ public class Router extends Device
 	 * Load a new ARP cache from a file.
 	 * @param arpCacheFile the name of the file containing the ARP cache
 	 */
+
+	 /**
+	  * @author Harshita Singh
+	  * @param arpCacheFile
+	  */
 	public void loadArpCache(String arpCacheFile)
 	{
 		if (!arpCache.load(arpCacheFile))
